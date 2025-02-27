@@ -2,6 +2,7 @@ import { useState } from "react";
 
 export default function Home() {
   const [file, setFile] = useState(null);
+  const [pingResult, setPingResult] = useState("");
 
   async function uploadCSV(event) {
     event.preventDefault();
@@ -34,6 +35,20 @@ export default function Home() {
     }
   }
 
+  async function checkPing() {
+    try {
+      const response = await fetch("/api/ping");
+      const result = await response.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Upload failed: ${response.status} - ${errorText}`);
+      }
+      setPingResult(result.message);
+    } catch (error) {
+      setPingResult("❌ Ping failed");
+    }
+  }
+
   return (
     <div>
       <h2>CSV Upload and Background Processing</h2>
@@ -48,6 +63,12 @@ export default function Home() {
         />
         <button type="submit">Upload CSV</button>
       </form>
+
+      <hr />
+
+      <h3>Health Check</h3>
+      <button onClick={checkPing}>Check Server Status</button>
+      {pingResult && <p>Server Response: {pingResult}</p>}
     </div>
   );
 }
