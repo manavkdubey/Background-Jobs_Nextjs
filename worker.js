@@ -1,38 +1,39 @@
 import { Worker } from "bullmq";
+import { URL } from "url"; // ✅ Import URL parser
 import csv from "csv-parser";
 import fs from "fs";
 import axios from "axios";
 import path from "path";
 import dotenv from "dotenv";
 
-dotenv.config(); // ✅ This is ignored in Railway but needed for local dev
+dotenv.config(); // ✅ Required for local development
 
-// ✅ Ensure required environment variables are set
-if (!process.env.REDIS_HOST || !process.env.REDIS_PORT) {
-  console.error("❌ ERROR: Missing REDIS_HOST or REDIS_PORT in Railway variables.");
+// ✅ Ensure REDIS_URL is set
+if (!process.env.REDIS_URL) {
+  console.error("❌ ERROR: Missing REDIS_URL in Railway variables.");
   process.exit(1);
 }
 
-// ✅ Parse Redis Port safely
-const redisPort = parseInt(process.env.REDIS_PORT, 10);
-if (isNaN(redisPort) || redisPort <= 0 || redisPort > 65535) {
-  console.error(`❌ ERROR: Invalid REDIS_PORT: "${process.env.REDIS_PORT}". Must be a number between 1 and 65535.`);
-  process.exit(1);
-}
-
-console.log(`🔗 Connecting to Redis at ${process.env.REDIS_HOST}:${redisPort}`);
-
-const connection = { 
-  host: process.env.REDIS_HOST, 
-  port: redisPort
+// ✅ Parse Redis URL safely
+const redisUrl = new URL(process.env.REDIS_URL);
+const connection = {
+  host: redisUrl.hostname, // ✅ Extract only the hostname
+  port: Number(redisUrl.port), // ✅ Convert port to number
+  password: redisUrl.password, // ✅ Extract password if needed
 };
+
+console.log(`🔗 Connecting to Redis at ${connection.host}:${connection.port}`);
 
 console.log("🚀 Worker is running and waiting for jobs...");
 
 const worker = new Worker(
   process.env.WORKER_QUEUE_NAME || "userQueue",
   async (job) => {
-    const filePath = path.join(process.cwd(), process.env.UPLOAD_DIR, job.data.filename);
+    const filePath = path.join(
+      process.cwd(),
+      process.env.UPLOAD_DIR,
+      job.data.filename,
+    );
     console.log(`⚡ Processing CSV file: ${filePath}`);
 
     const users = [];
@@ -52,7 +53,10 @@ const worker = new Worker(
 
           for (const user of users) {
             try {
-              await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users`, user);
+              await axios.post(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users`,
+                user,
+              );
               console.log(`📤 Sent: ${user.email}`);
             } catch (error) {
               console.error(`❌ Failed to send ${user.email}:`, error.message);
@@ -65,7 +69,7 @@ const worker = new Worker(
         .on("error", reject);
     });
   },
-  { connection }
+  { connection },
 );
 
 worker.on("completed", (job) => {
