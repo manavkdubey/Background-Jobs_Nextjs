@@ -24,6 +24,32 @@ const connection = {
   password: redisUrl.password, // ✅ Extract password if needed
 };
 
+import { setTimeout } from "timers/promises";
+
+async function connectWithRetry() {
+  for (let i = 0; i < 5; i++) {
+    try {
+      console.log(`🔄 Attempt ${i + 1}: Connecting to Redis...`);
+      const redisUrl = new URL(process.env.REDIS_URL);
+      const connection = {
+        host: redisUrl.hostname,
+        port: Number(redisUrl.port),
+        password: redisUrl.password,
+      };
+      console.log(
+        `✅ Connected to Redis at ${connection.host}:${connection.port}`,
+      );
+      return connection;
+    } catch (error) {
+      console.error("❌ Redis connection failed. Retrying...");
+      await setTimeout(5000);
+    }
+  }
+  throw new Error("🚨 Failed to connect to Redis after 5 attempts.");
+}
+
+const connection = await connectWithRetry();
+
 console.log(`🔗 Connecting to Redis at ${connection.host}:${connection.port}`);
 
 console.log("🚀 Worker is running and waiting for jobs...");
