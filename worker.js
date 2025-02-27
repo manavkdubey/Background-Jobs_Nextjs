@@ -18,11 +18,11 @@ console.log("🔍 DEBUG ENV: REDIS_URL =", process.env.REDIS_URL);
 
 // ✅ Parse Redis URL safely
 const redisUrl = new URL(process.env.REDIS_URL);
-const connection = {
-  host: redisUrl.hostname, // ✅ Extract only the hostname
-  port: Number(redisUrl.port), // ✅ Convert port to number
-  password: redisUrl.password, // ✅ Extract password if needed
-};
+// const connection = {
+//   host: redisUrl.hostname, // ✅ Extract only the hostname
+//   port: Number(redisUrl.port), // ✅ Convert port to number
+//   password: redisUrl.password, // ✅ Extract password if needed
+// };
 
 import { setTimeout } from "timers/promises";
 
