@@ -39,13 +39,10 @@ export default function Home() {
     try {
       const response = await fetch("/api/ping");
       const result = await response.json();
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Upload failed: ${response.status} - ${errorText}`);
-      }
+
       setPingResult(result.message);
     } catch (error) {
-      setPingResult("❌ Ping failed");
+      setPingResult(`Error: ${error.message}`);
     }
   }
 
