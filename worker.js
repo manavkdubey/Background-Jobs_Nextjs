@@ -14,6 +14,8 @@ if (!process.env.REDIS_URL) {
   process.exit(1);
 }
 
+console.log("🔍 DEBUG ENV: REDIS_URL =", process.env.REDIS_URL);
+
 // ✅ Parse Redis URL safely
 const redisUrl = new URL(process.env.REDIS_URL);
 const connection = {
